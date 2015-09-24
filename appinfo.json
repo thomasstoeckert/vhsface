@@ -1,0 +1,26 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "thomas@stoeckert.us",
+    "longName": "Viera Watchface",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/HAWKS-125.png",
+                "name": "HAWK_BACKER",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "VHS Face",
+    "uuid": "649bfb19-3094-4e6a-9598-5aea08478406",
+    "versionCode": 1,
+    "versionLabel": "0.1",
+    "watchapp": {
+        "watchface": true
+    }
+}
