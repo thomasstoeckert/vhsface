@@ -9,7 +9,27 @@
     "resources": {
         "media": [
             {
-                "file": "images/HAWKS-125.png",
+                "file": "images/vhs_schedule_blank.png",
+                "name": "SCHED_BACKER_BLANK",
+                "type": "png"
+            },
+            {
+                "file": "images/vhs_schedule_regu.png",
+                "name": "SCHED_BACKER_SHORT",
+                "type": "png"
+            },
+            {
+                "file": "images/vhs_schedule_short.png",
+                "name": "SCHED_BACKER_REGU",
+                "type": "png"
+            },
+            {
+                "file": "images/vhs_test_image.png",
+                "name": "TEST_IMAGE",
+                "type": "png"
+            },
+            {
+                "file": "images/vhs_hawk_backer.png",
                 "name": "HAWK_BACKER",
                 "type": "png"
             }
