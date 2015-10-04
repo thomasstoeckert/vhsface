@@ -1,20 +1,94 @@
 #include "main.h"
+#include "scheduleInfo.c"
 #include <pebble.h>
 
 //Global variable definitions
 static Window *s_mainWindow;
 static BitmapLayer *s_hawkBacker_layer;
 static BitmapLayer *s_schedBacker_layer;
-static Layer *s_hands_layer;
-//static TextLayer *s_time_layer;
-static TextLayer *s_sched_start, *s_sched_end, *s_sched_cur;
+static InverterLayer *s_battery_inverter;
+static Layer *s_hands_layer, *s_battery_layer;
+static bool deployed;
+static TextLayer *s_sched_start, *s_sched_end, *s_sched_cur, *s_battery_text;
+static PropertyAnimation *s_deploy_animation, *s_return_animation;
 static GPath *s_minute_hand, *s_hour_hand;
-static GRect s_clock_rect;
+static GRect s_clock_rect, s_batteryBack_rect;
 static GPoint s_sched_dep, s_sched_ret;
 static GBitmap *s_hawkBacker_bitmap;
 static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
+static int s_battery_level;
+
+void stopped_return_animation(Animation *animation, void *data){
+  deployed = false;
+  property_animation_destroy(s_return_animation);
+}
+
+void started_return_animation(Animation *animation, void *data){
+  deployed = false;
+}
+
+static void trigger_return_animation(){
+  if(!deployed){
+    return;
+  }
+  
+  //Setting up the animation
+  GRect from_frame = GRect(s_sched_dep.x, s_sched_dep.y, 144, 161);
+  GRect to_frame = GRect(s_sched_ret.x, s_sched_ret.y, 144, 161);
+  s_return_animation = property_animation_create_layer_frame(bitmap_layer_get_layer(s_schedBacker_layer), &from_frame, &to_frame);
+  animation_set_duration((Animation*)s_deploy_animation, 750);
+  animation_set_delay((Animation*)s_deploy_animation, 3000);
+  animation_set_curve((Animation*)s_deploy_animation, AnimationCurveEaseIn);
+  animation_set_handlers((Animation*)s_deploy_animation, (AnimationHandlers){
+    .stopped = (AnimationStoppedHandler)stopped_return_animation,
+    .started = (AnimationStartedHandler)started_return_animation
+  }, NULL);
+  
+  animation_schedule((Animation*)s_return_animation);
+}
+
+void stopped_deploy_animation(Animation *animation, void *data){
+  deployed = true;
+  property_animation_destroy(s_deploy_animation);
+  trigger_return_animation();
+}
+
+void started_deploy_animation(Animation *animation, void *data){
+  deployed = true;
+}
+
+static void trigger_deploy_animation(){
+  if(deployed){
+    return;
+  }
+  
+  //Setting up the animation
+  GRect from_frame = GRect(s_sched_ret.x, s_sched_ret.y, 144, 161);
+  GRect to_frame = GRect(s_sched_dep.x, s_sched_dep.y, 144, 161);
+  s_deploy_animation = property_animation_create_layer_frame(bitmap_layer_get_layer(s_schedBacker_layer), &from_frame, &to_frame);
+  animation_set_duration((Animation*)s_deploy_animation, 750);
+  animation_set_curve((Animation*)s_deploy_animation, AnimationCurveEaseIn);
+  animation_set_handlers((Animation*)s_deploy_animation, (AnimationHandlers){
+    .stopped = (AnimationStoppedHandler)stopped_deploy_animation,
+    .started = (AnimationStartedHandler)started_deploy_animation
+  }, NULL);
+  
+  animation_schedule((Animation*) s_deploy_animation);
+}
+
+static void tap_handler(AccelAxisType axis, int32_t direction){
+  switch(axis){
+    case ACCEL_AXIS_X:
+      break;
+    case ACCEL_AXIS_Y:
+      trigger_deploy_animation();
+      break;
+    case ACCEL_AXIS_Z:
+      break;
+  }
+}
 
 static void update_hands(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
@@ -39,35 +113,68 @@ static void update_hands(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, GRect(bounds.size.w / 2 - 1, bounds.size.h / 2 - 1, 3, 3), 0, GCornerNone);
 }
 
+static void battery_callback(BatteryChargeState state){
+  s_battery_level = state.charge_percent;
+  char battText[5] = "00%%";
+  snprintf(battText, sizeof(battText), "%d%%", s_battery_level);
+  text_layer_set_text(s_battery_text, battText);
+  int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
+  GRect newBounds = layer_get_bounds(inverter_layer_get_layer(s_battery_inverter));
+  newBounds.size.w = width;
+  newBounds.origin.y = 132;
+  layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
+}
+
 static void update_time() {
   //Get a tm structure
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
   char day[3];
   strftime(day, sizeof("WED"), "%a", tick_time);
+  char time[4];
+  strftime(time, sizeof("0000"), "%H%M", tick_time);
+  int timeI = atoi(time);
   if(strcmp(day, "Wed") == 0){
-    APP_LOG(APP_LOG_LEVEL_INFO, "Wendsday");
+    //APP_LOG(APP_LOG_LEVEL_INFO, "Wednesday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_short_bitmap);
+    for (int i = 0; i <= 6; i++){
+      if(timeI >= sched_shr_times[i]){
+        continue;
+      } else {
+        i -= 1;
+        text_layer_set_text(s_sched_start, sched_shr_p_start[i]);
+        text_layer_set_text(s_sched_cur, sched_p_label[i]);
+        text_layer_set_text(s_sched_end, sched_shr_p_end[i]);
+        break;
+      }
+    }
   } else if(strcmp(day, "Sat") == 0 || strcmp(day, "Sun") == 0){
-    APP_LOG(APP_LOG_LEVEL_INFO, "Weekends");
+    //APP_LOG(APP_LOG_LEVEL_INFO, "Weekend");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_blank_bitmap);
+    text_layer_set_text(s_sched_start, "N/A");
+    text_layer_set_text(s_sched_cur, "N/A");
+    text_layer_set_text(s_sched_end, "N/A");
   } else {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
+    //APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
-  }
-  char min[2];
-  strftime(min, sizeof("00"), "%M", tick_time);
-  int mini = atoi(min);
-  if(mini % 2 == 0){
-    layer_set_frame(bitmap_layer_get_layer(s_schedBacker_layer), GRect(s_sched_dep.x, s_sched_dep.y, 144, 161));
-  } else {
-    layer_set_frame(bitmap_layer_get_layer(s_schedBacker_layer), GRect(s_sched_ret.x, s_sched_ret.y, 144, 161));
+    for (int i = 0; i <= 6; i++){
+      if(timeI >= sched_reg_times[i]){
+        continue;
+      } else {
+        i -= 1;
+        text_layer_set_text(s_sched_start, sched_reg_p_start[i]);
+        text_layer_set_text(s_sched_cur, sched_p_label[i]);
+        text_layer_set_text(s_sched_end, sched_reg_p_end[i]);
+        break;
+      }
+    }
   }
 }
 
 static void mainWindow_load(Window *window){
   s_clock_rect = GRect(9, 7, 126, 126);
-  GRect scheduleThing = GRect(0, 7, 144, 161);
+  s_batteryBack_rect = GRect(0, 132, 144, 15);
+  GRect scheduleThing = GRect(0, 146, 144, 161);
   GRect shortFrame = GRect(0, -10, 144, 168);
   Layer *mainLayer = window_get_root_layer(s_mainWindow);
   //Make everything here
@@ -82,21 +189,19 @@ static void mainWindow_load(Window *window){
   layer_add_child(mainLayer, bitmap_layer_get_layer(s_hawkBacker_layer));
   s_schedBacker_layer = bitmap_layer_create(scheduleThing);
   bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
-  //Create time thingy
-  //LOL NO
-  /*
-  s_time_layer = text_layer_create(GRect(9, 117, 126, 55));
-  text_layer_set_background_color(s_time_layer, GColorClear);
-  text_layer_set_text_color(s_time_layer, GColorBlack);
-  text_layer_set_text(s_time_layer, "00:00");
-  text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
-  text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
-  layer_add_child(mainLayer, text_layer_get_layer(s_time_layer));
-  */
   
   s_hands_layer = layer_create(shortFrame);
   layer_set_update_proc(s_hands_layer, update_hands);
   layer_add_child(mainLayer, s_hands_layer);
+  
+  s_battery_text = text_layer_create(s_batteryBack_rect);
+  text_layer_set_text_alignment(s_battery_text, GTextAlignmentCenter);
+  text_layer_set_text(s_battery_text, "100%");
+  text_layer_set_text_color(s_battery_text, GColorBlack);
+  layer_add_child(mainLayer, text_layer_get_layer(s_battery_text));
+  
+  s_battery_inverter = inverter_layer_create(s_batteryBack_rect);
+  layer_add_child(mainLayer, inverter_layer_get_layer(s_battery_inverter));
   
   layer_add_child(mainLayer, bitmap_layer_get_layer(s_schedBacker_layer));
   
@@ -138,6 +243,10 @@ static void mainWindow_unload(Window *window){
   text_layer_destroy(s_sched_start);
   text_layer_destroy(s_sched_cur);
   text_layer_destroy(s_sched_end);
+  text_layer_destroy(s_battery_text);
+  inverter_layer_destroy(s_battery_inverter);
+  layer_destroy(s_hands_layer);
+  layer_destroy(s_battery_layer);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
@@ -149,7 +258,7 @@ static void init(){
   s_mainWindow = window_create();
   s_sched_dep = GPoint(0, 7);
   s_sched_ret = GPoint(0, 146);
-  
+  deployed = false;
   window_set_window_handlers(s_mainWindow, (WindowHandlers){
     .load = mainWindow_load,
     .unload = mainWindow_unload
@@ -167,6 +276,12 @@ static void init(){
 
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   //Put registers underneath
+  
+  //Registering the tapper
+  accel_tap_service_subscribe(tap_handler);
+
+  //Registering the battery
+  battery_callback(battery_state_service_peek());
 }
 
 static void deinit(){
