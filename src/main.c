@@ -141,7 +141,9 @@ static void update_time() {
       if(timeI >= sched_shr_times[i]){
         continue;
       } else {
-        i -= 1;
+        if(i > 1){
+          i -= 1;
+        }
         text_layer_set_text(s_sched_start, sched_shr_p_start[i]);
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_shr_p_end[i]);
@@ -161,7 +163,9 @@ static void update_time() {
       if(timeI >= sched_reg_times[i]){
         continue;
       } else {
-        i -= 1;
+        if(i > 1){
+          i -= 1;
+        }
         text_layer_set_text(s_sched_start, sched_reg_p_start[i]);
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_reg_p_end[i]);
