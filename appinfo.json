@@ -39,7 +39,7 @@
     "shortName": "VHS Face",
     "uuid": "649bfb19-3094-4e6a-9598-5aea08478406",
     "versionCode": 1,
-    "versionLabel": "1",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }

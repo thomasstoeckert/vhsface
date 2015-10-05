@@ -141,7 +141,7 @@ static void update_time() {
       if(timeI >= sched_shr_times[i]){
         continue;
       } else {
-        if(i > 1){
+        if(i >= 1){
           i -= 1;
         }
         text_layer_set_text(s_sched_start, sched_shr_p_start[i]);
@@ -163,7 +163,7 @@ static void update_time() {
       if(timeI >= sched_reg_times[i]){
         continue;
       } else {
-        if(i > 1){
+        if(i >= 1){
           i -= 1;
         }
         text_layer_set_text(s_sched_start, sched_reg_p_start[i]);
