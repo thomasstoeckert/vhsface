@@ -9,7 +9,7 @@ static BitmapLayer *s_schedBacker_layer;
 static InverterLayer *s_battery_inverter;
 static Layer *s_hands_layer, *s_battery_layer;
 static bool deployed;
-static TextLayer *s_sched_start, *s_sched_end, *s_sched_cur, *s_battery_text;
+static TextLayer *s_sched_start, *s_sched_end, *s_sched_cur, *s_battery_text, *s_date_text, *s_day_text;
 static PropertyAnimation *s_deploy_animation, *s_return_animation;
 static GPath *s_minute_hand, *s_hour_hand;
 static GRect s_clock_rect, s_batteryBack_rect;
@@ -115,14 +115,19 @@ static void update_hands(Layer *layer, GContext *ctx) {
 
 static void battery_callback(BatteryChargeState state){
   s_battery_level = state.charge_percent;
-  char battText[5] = "00%%";
-  snprintf(battText, sizeof(battText), "%d%%", s_battery_level);
-  text_layer_set_text(s_battery_text, battText);
-  int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
-  GRect newBounds = layer_get_bounds(inverter_layer_get_layer(s_battery_inverter));
-  newBounds.size.w = width;
-  newBounds.origin.y = 132;
-  layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
+  if(state.is_charging){
+    text_layer_set_text(s_battery_text, "");
+    layer_set_frame(inverter_layer_get_layer(s_battery_inverter), s_batteryBack_rect);
+  } else {
+    char battText[5] = "00%%";
+    snprintf(battText, sizeof(battText), "%d%%", s_battery_level);
+    text_layer_set_text(s_battery_text, battText);
+    int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
+    GRect newBounds = layer_get_bounds(inverter_layer_get_layer(s_battery_inverter));
+    newBounds.size.w = width;
+    newBounds.origin.y = 132;
+    layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
+  }
 }
 
 static void update_time() {
@@ -133,17 +138,20 @@ static void update_time() {
   strftime(day, sizeof("WED"), "%a", tick_time);
   char time[4];
   strftime(time, sizeof("0000"), "%H%M", tick_time);
+  APP_LOG(APP_LOG_LEVEL_INFO, "%s", time);
   int timeI = atoi(time);
   if(strcmp(day, "Wed") == 0){
     //APP_LOG(APP_LOG_LEVEL_INFO, "Wednesday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_short_bitmap);
-    for (int i = 0; i <= 6; i++){
+    for (int i = 0; i < 10; i++){
       if(timeI >= sched_shr_times[i]){
         continue;
       } else {
+        //APP_LOG(APP_LOG_LEVEL_INFO, "%d", i);
         if(i >= 1){
           i -= 1;
         }
+        //APP_LOG(APP_LOG_LEVEL_INFO, "%d", i);
         text_layer_set_text(s_sched_start, sched_shr_p_start[i]);
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_shr_p_end[i]);
@@ -159,9 +167,10 @@ static void update_time() {
   } else {
     //APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
-    for (int i = 0; i <= 6; i++){
+    for (int i = 0; i < 10; i++){
       if(timeI >= sched_reg_times[i]){
         continue;
+      
       } else {
         if(i >= 1){
           i -= 1;
@@ -198,11 +207,30 @@ static void mainWindow_load(Window *window){
   layer_set_update_proc(s_hands_layer, update_hands);
   layer_add_child(mainLayer, s_hands_layer);
   
+  GFont BatteryFont = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+  
   s_battery_text = text_layer_create(s_batteryBack_rect);
   text_layer_set_text_alignment(s_battery_text, GTextAlignmentCenter);
   text_layer_set_text(s_battery_text, "100%");
   text_layer_set_text_color(s_battery_text, GColorBlack);
+  text_layer_set_font(s_battery_text, BatteryFont);
   layer_add_child(mainLayer, text_layer_get_layer(s_battery_text));
+  
+  s_date_text = text_layer_create(s_batteryBack_rect);
+  text_layer_set_text_alignment(s_date_text, GTextAlignmentRight);
+  text_layer_set_text(s_date_text, "Jan 29th");
+  text_layer_set_text_color(s_date_text, GColorBlack);
+  text_layer_set_font(s_date_text, BatteryFont);
+  layer_add_child(mainLayer, text_layer_get_layer(s_date_text));
+  
+  s_day_text = text_layer_create(s_batteryBack_rect);
+  text_layer_set_text_alignment(s_day_text, GTextAlignmentLeft);
+  text_layer_set_text(s_day_text, "Saturday");
+  text_layer_set_text_color(s_day_text, GColorBlack);
+  text_layer_set_font(s_day_text, BatteryFont);
+  text_layer_set_background_color(s_day_text, GColorClear);
+  text_layer_set_background_color(s_date_text, GColorClear);
+  layer_add_child(mainLayer, text_layer_get_layer(s_day_text));
   
   s_battery_inverter = inverter_layer_create(s_batteryBack_rect);
   layer_add_child(mainLayer, inverter_layer_get_layer(s_battery_inverter));
