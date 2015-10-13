@@ -19,14 +19,11 @@ static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
 static int s_battery_level;
+static char *leftText, *rightText;
 
 void stopped_return_animation(Animation *animation, void *data){
   deployed = false;
   property_animation_destroy(s_return_animation);
-}
-
-void started_return_animation(Animation *animation, void *data){
-  deployed = false;
 }
 
 static void trigger_return_animation(){
@@ -42,8 +39,7 @@ static void trigger_return_animation(){
   animation_set_delay((Animation*)s_deploy_animation, 3000);
   animation_set_curve((Animation*)s_deploy_animation, AnimationCurveEaseIn);
   animation_set_handlers((Animation*)s_deploy_animation, (AnimationHandlers){
-    .stopped = (AnimationStoppedHandler)stopped_return_animation,
-    .started = (AnimationStartedHandler)started_return_animation
+    .stopped = (AnimationStoppedHandler)stopped_return_animation
   }, NULL);
   
   animation_schedule((Animation*)s_return_animation);
@@ -115,19 +111,14 @@ static void update_hands(Layer *layer, GContext *ctx) {
 
 static void battery_callback(BatteryChargeState state){
   s_battery_level = state.charge_percent;
-  if(state.is_charging){
-    text_layer_set_text(s_battery_text, "");
-    layer_set_frame(inverter_layer_get_layer(s_battery_inverter), s_batteryBack_rect);
-  } else {
-    char battText[5] = "00%%";
-    snprintf(battText, sizeof(battText), "%d%%", s_battery_level);
-    text_layer_set_text(s_battery_text, battText);
-    int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
-    GRect newBounds = layer_get_bounds(inverter_layer_get_layer(s_battery_inverter));
-    newBounds.size.w = width;
-    newBounds.origin.y = 132;
-    layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
-  }
+  char battText[5] = "00%%";
+  snprintf(battText, sizeof(battText), "%d%%", s_battery_level);
+  text_layer_set_text(s_battery_text, battText);
+  int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
+  GRect newBounds = layer_get_bounds(inverter_layer_get_layer(s_battery_inverter));
+  newBounds.size.w = width;
+  newBounds.origin.y = 132;
+  layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
 }
 
 static void update_time() {
@@ -182,6 +173,16 @@ static void update_time() {
       }
     }
   }
+  rightText = "  /  ";
+  leftText = "        ";
+  strftime(rightText, sizeof("00/00"), "%m/%e", tick_time);
+  strftime(leftText, sizeof("Wednesday"), "%A", tick_time);
+  APP_LOG(APP_LOG_LEVEL_INFO, "%s", rightText);
+  //APP_LOG(APP_LOG_LEVEL_INFO, "%s", leftText);
+  
+  text_layer_set_text(s_date_text, rightText);
+  text_layer_set_text(s_day_text, leftText);
+  APP_LOG(APP_LOG_LEVEL_INFO, "%s", text_layer_get_text(s_day_text));
 }
 
 static void mainWindow_load(Window *window){
@@ -214,14 +215,18 @@ static void mainWindow_load(Window *window){
   text_layer_set_text(s_battery_text, "100%");
   text_layer_set_text_color(s_battery_text, GColorBlack);
   text_layer_set_font(s_battery_text, BatteryFont);
+  text_layer_set_background_color(s_battery_text, GColorClear);
   layer_add_child(mainLayer, text_layer_get_layer(s_battery_text));
+  
   
   s_date_text = text_layer_create(s_batteryBack_rect);
   text_layer_set_text_alignment(s_date_text, GTextAlignmentRight);
-  text_layer_set_text(s_date_text, "Jan 29th");
+  text_layer_set_text(s_date_text, "10/29");
   text_layer_set_text_color(s_date_text, GColorBlack);
   text_layer_set_font(s_date_text, BatteryFont);
+  text_layer_set_background_color(s_date_text, GColorClear);
   layer_add_child(mainLayer, text_layer_get_layer(s_date_text));
+  
   
   s_day_text = text_layer_create(s_batteryBack_rect);
   text_layer_set_text_alignment(s_day_text, GTextAlignmentLeft);
@@ -229,7 +234,6 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_color(s_day_text, GColorBlack);
   text_layer_set_font(s_day_text, BatteryFont);
   text_layer_set_background_color(s_day_text, GColorClear);
-  text_layer_set_background_color(s_date_text, GColorClear);
   layer_add_child(mainLayer, text_layer_get_layer(s_day_text));
   
   s_battery_inverter = inverter_layer_create(s_batteryBack_rect);
@@ -237,7 +241,7 @@ static void mainWindow_load(Window *window){
   
   layer_add_child(mainLayer, bitmap_layer_get_layer(s_schedBacker_layer));
   
-  //Adding date info
+  //Adding period info
   s_sched_start = text_layer_create(GRect(2, -4, 51, 18));
   s_sched_cur = text_layer_create(GRect(59, -3, 26, 18));
   s_sched_end = text_layer_create(GRect(93, -4, 49, 18));
