@@ -61,7 +61,7 @@ static const char *sched_shr_p_start[] = {
   "2:15"
 };
 static const char *sched_shr_p_end[] = {
-  "8:45"
+  "8:45",
   "9:22",
   "10:02",
   "10:42",

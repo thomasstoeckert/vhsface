@@ -19,7 +19,7 @@ static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
 static int s_battery_level;
-static char *leftText, *rightText;
+static char leftText[9], rightText[5];
 
 void stopped_return_animation(Animation *animation, void *data){
   deployed = false;
@@ -146,6 +146,7 @@ static void update_time() {
         text_layer_set_text(s_sched_start, sched_shr_p_start[i]);
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_shr_p_end[i]);
+        //APP_LOG(APP_LOG_LEVEL_INFO, "%s", sched_shr_p_end[i]);
         break;
       }
     }
@@ -173,16 +174,14 @@ static void update_time() {
       }
     }
   }
-  rightText = "  /  ";
-  leftText = "        ";
-  strftime(rightText, sizeof("00/00"), "%m/%e", tick_time);
-  strftime(leftText, sizeof("Wednesday"), "%A", tick_time);
-  APP_LOG(APP_LOG_LEVEL_INFO, "%s", rightText);
+  //strftime(rightText, sizeof("00/000"), "%m/%e", tick_time);
+  //strftime(leftText, sizeof("Wednesdayy"), "%a", tick_time);
+  //APP_LOG(APP_LOG_LEVEL_INFO, "%s", rightText);
   //APP_LOG(APP_LOG_LEVEL_INFO, "%s", leftText);
   
   text_layer_set_text(s_date_text, rightText);
   text_layer_set_text(s_day_text, leftText);
-  APP_LOG(APP_LOG_LEVEL_INFO, "%s", text_layer_get_text(s_day_text));
+  //APP_LOG(APP_LOG_LEVEL_INFO, "%s", text_layer_get_text(s_day_text));
 }
 
 static void mainWindow_load(Window *window){
