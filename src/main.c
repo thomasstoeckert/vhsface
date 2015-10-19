@@ -141,11 +141,11 @@ static void update_time() {
         //APP_LOG(APP_LOG_LEVEL_INFO, "%d", i);
         remTime = sched_shr_times[i] - timeI;
         if(remTime > 60 && remTime > 0) {
-          siprintf(remLabel, ">60");
+          snprintf(remLabel, 3, ">60");
         } else if (remTime == 0){
-          siprintf(remLabel, "<0");
+          snprintf(remLabel, 3, "<0");
         } else {
-          siprintf(remLabel, "%d", remTime);
+          snprintf(remLabel, 3, "%d", remTime);
         }
         if(i >= 1){
           i -= 1;
@@ -165,7 +165,7 @@ static void update_time() {
     text_layer_set_text(s_sched_start, "N/A");
     text_layer_set_text(s_sched_cur, "N/A");
     text_layer_set_text(s_sched_end, "N/A");
-    siprintf(remLabel, "   ");
+    snprintf(remLabel, 3, "   ");
   } else {
     //APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
@@ -176,11 +176,11 @@ static void update_time() {
       } else {
         remTime = sched_shr_times[i] - timeI;
         if(remTime > 60 && remTime > 0) {
-          siprintf(remLabel, ">60");
+          snprintf(remLabel, 3, ">60");
         } else if (remTime == 0){
-          siprintf(remLabel, "<0");
+          snprintf(remLabel, 3, "<0");
         } else {
-          siprintf(remLabel, "%d", remTime);
+          snprintf(remLabel, 3, "%d", remTime);
         }
         if(i >= 1){
           i -= 1;
@@ -197,6 +197,7 @@ static void update_time() {
   //strftime(leftText, sizeof("Wed"), "%a", tick_time);
   //strftime(rightText, sizeof("00/00"), "%m/%e", tick_time);
   APP_LOG(APP_LOG_LEVEL_INFO, "The time remaining until next period is %s", remLabel);
+  APP_LOG(APP_LOG_LEVEL_INFO, "The label is %s", remLabel);
   text_layer_set_text(s_date_text, rightText);
   text_layer_set_text(s_day_text, leftText);
   //APP_LOG(APP_LOG_LEVEL_INFO, "%s", text_layer_get_text(s_day_text));
@@ -257,6 +258,9 @@ static void mainWindow_load(Window *window){
   layer_add_child(mainLayer, inverter_layer_get_layer(s_battery_inverter));
   
   layer_add_child(mainLayer, bitmap_layer_get_layer(s_schedBacker_layer));
+  
+  layer_set_hidden(text_layer_get_layer(s_day_text), true);
+  layer_set_hidden(text_layer_get_layer(s_date_text), true);
   
   //Adding period info
   s_sched_start = text_layer_create(GRect(2, -4, 51, 18));
