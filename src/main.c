@@ -19,7 +19,6 @@ static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
 static int s_battery_level;
-static char leftText[9], rightText[5];
 
 void stopped_return_animation(Animation *animation, void *data){
   deployed = false;
@@ -129,8 +128,9 @@ static void update_time() {
   strftime(day, sizeof("WED"), "%a", tick_time);
   char time[4];
   strftime(time, sizeof("0000"), "%H%M", tick_time);
-  APP_LOG(APP_LOG_LEVEL_INFO, "%s", time);
+  static char remLabel[3];
   int timeI = atoi(time);
+  int remTime;
   if(strcmp(day, "Wed") == 0){
     //APP_LOG(APP_LOG_LEVEL_INFO, "Wednesday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_short_bitmap);
@@ -139,6 +139,14 @@ static void update_time() {
         continue;
       } else {
         //APP_LOG(APP_LOG_LEVEL_INFO, "%d", i);
+        remTime = sched_shr_times[i] - timeI;
+        if(remTime > 60 && remTime > 0) {
+          siprintf(remLabel, ">60");
+        } else if (remTime == 0){
+          siprintf(remLabel, "<0");
+        } else {
+          siprintf(remLabel, "%d", remTime);
+        }
         if(i >= 1){
           i -= 1;
         }
@@ -147,6 +155,7 @@ static void update_time() {
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_shr_p_end[i]);
         //APP_LOG(APP_LOG_LEVEL_INFO, "%s", sched_shr_p_end[i]);
+        
         break;
       }
     }
@@ -156,6 +165,7 @@ static void update_time() {
     text_layer_set_text(s_sched_start, "N/A");
     text_layer_set_text(s_sched_cur, "N/A");
     text_layer_set_text(s_sched_end, "N/A");
+    siprintf(remLabel, "   ");
   } else {
     //APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
@@ -164,6 +174,14 @@ static void update_time() {
         continue;
       
       } else {
+        remTime = sched_shr_times[i] - timeI;
+        if(remTime > 60 && remTime > 0) {
+          siprintf(remLabel, ">60");
+        } else if (remTime == 0){
+          siprintf(remLabel, "<0");
+        } else {
+          siprintf(remLabel, "%d", remTime);
+        }
         if(i >= 1){
           i -= 1;
         }
@@ -174,11 +192,11 @@ static void update_time() {
       }
     }
   }
-  //strftime(rightText, sizeof("00/000"), "%m/%e", tick_time);
-  //strftime(leftText, sizeof("Wednesdayy"), "%a", tick_time);
-  //APP_LOG(APP_LOG_LEVEL_INFO, "%s", rightText);
-  //APP_LOG(APP_LOG_LEVEL_INFO, "%s", leftText);
-  
+  static char leftText[] = "Wed";
+  static char rightText[] = "00/00";
+  //strftime(leftText, sizeof("Wed"), "%a", tick_time);
+  //strftime(rightText, sizeof("00/00"), "%m/%e", tick_time);
+  APP_LOG(APP_LOG_LEVEL_INFO, "The time remaining until next period is %s", remLabel);
   text_layer_set_text(s_date_text, rightText);
   text_layer_set_text(s_day_text, leftText);
   //APP_LOG(APP_LOG_LEVEL_INFO, "%s", text_layer_get_text(s_day_text));
