@@ -130,7 +130,7 @@ static void update_time() {
   strftime(time, sizeof("0000"), "%H%M", tick_time);
   static char remLabel[3];
   int timeI = atoi(time);
-  int remTime;
+  int remTime = 0;
   if(strcmp(day, "Wed") == 0){
     //APP_LOG(APP_LOG_LEVEL_INFO, "Wednesday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_short_bitmap);
@@ -138,14 +138,20 @@ static void update_time() {
       if(timeI >= sched_shr_times[i]){
         continue;
       } else {
-        //APP_LOG(APP_LOG_LEVEL_INFO, "%d", i);
-        remTime = sched_shr_times[i] - timeI;
+        int nextPer = sched_shr_times[i + 1];
+        int nextPerM = nextPer % 100;
+        int nextPerH = nextPer / 100;
+        int timeM = timeI % 100;
+        int timeH = timeI / 100;
+        int nextF = (nextPerH * 60) + nextPerM;
+        int timeF = (timeH * 60) + timeM;
+        remTime = nextF - timeF;
         if(remTime > 60 && remTime > 0) {
-          snprintf(remLabel, 3, ">60");
+          snprintf(remLabel, 12, ">60 mins");
         } else if (remTime == 0){
-          snprintf(remLabel, 3, "<0");
+          snprintf(remLabel, 12, "<0 mins");
         } else {
-          snprintf(remLabel, 3, "%d", remTime);
+          snprintf(remLabel, 12, "%d mins", remTime);
         }
         if(i >= 1){
           i -= 1;
@@ -154,7 +160,7 @@ static void update_time() {
         text_layer_set_text(s_sched_start, sched_shr_p_start[i]);
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_shr_p_end[i]);
-        //APP_LOG(APP_LOG_LEVEL_INFO, "%s", sched_shr_p_end[i]);
+        text_layer_set_text(s_day_text, remLabel);
         
         break;
       }
@@ -166,6 +172,7 @@ static void update_time() {
     text_layer_set_text(s_sched_cur, "N/A");
     text_layer_set_text(s_sched_end, "N/A");
     snprintf(remLabel, 3, "   ");
+    text_layer_set_text(s_day_text, "");
   } else {
     //APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
@@ -174,13 +181,20 @@ static void update_time() {
         continue;
       
       } else {
-        remTime = sched_shr_times[i] - timeI;
+        int nextPer = sched_shr_times[i + 1];
+        int nextPerM = nextPer % 100;
+        int nextPerH = nextPer / 100;
+        int timeM = timeI % 100;
+        int timeH = timeI / 100;
+        int nextF = (nextPerH * 60) + nextPerM;
+        int timeF = (timeH * 60) + timeM;
+        remTime = nextF - timeF;
         if(remTime > 60 && remTime > 0) {
-          snprintf(remLabel, 3, ">60");
+          snprintf(remLabel, 12, ">60 minutes");
         } else if (remTime == 0){
-          snprintf(remLabel, 3, "<0");
+          snprintf(remLabel, 12, "<0 minutes");
         } else {
-          snprintf(remLabel, 3, "%d", remTime);
+          snprintf(remLabel, 12, "%d minutes", remTime);
         }
         if(i >= 1){
           i -= 1;
@@ -188,18 +202,19 @@ static void update_time() {
         text_layer_set_text(s_sched_start, sched_reg_p_start[i]);
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_reg_p_end[i]);
+        text_layer_set_text(s_day_text, remLabel);
         break;
       }
     }
   }
-  static char leftText[] = "Wed";
-  static char rightText[] = "00/00";
+  //static char leftText[] = "Wed";
+  //static char rightText[] = "00/00";
   //strftime(leftText, sizeof("Wed"), "%a", tick_time);
   //strftime(rightText, sizeof("00/00"), "%m/%e", tick_time);
-  APP_LOG(APP_LOG_LEVEL_INFO, "The time remaining until next period is %s", remLabel);
-  APP_LOG(APP_LOG_LEVEL_INFO, "The label is %s", remLabel);
-  text_layer_set_text(s_date_text, rightText);
-  text_layer_set_text(s_day_text, leftText);
+  //APP_LOG(APP_LOG_LEVEL_INFO, "Numerical time is %d", timeI);
+  //APP_LOG(APP_LOG_LEVEL_INFO, "The time remaining until next period is %d, and the label is %s", remTime, remLabel);
+  //text_layer_set_text(s_date_text, rightText);
+  //text_layer_set_text(s_day_text, leftText);
   //APP_LOG(APP_LOG_LEVEL_INFO, "%s", text_layer_get_text(s_day_text));
 }
 
@@ -239,7 +254,7 @@ static void mainWindow_load(Window *window){
   
   s_date_text = text_layer_create(s_batteryBack_rect);
   text_layer_set_text_alignment(s_date_text, GTextAlignmentRight);
-  text_layer_set_text(s_date_text, "10/29");
+  text_layer_set_text(s_date_text, "");
   text_layer_set_text_color(s_date_text, GColorBlack);
   text_layer_set_font(s_date_text, BatteryFont);
   text_layer_set_background_color(s_date_text, GColorClear);
@@ -248,7 +263,7 @@ static void mainWindow_load(Window *window){
   
   s_day_text = text_layer_create(s_batteryBack_rect);
   text_layer_set_text_alignment(s_day_text, GTextAlignmentLeft);
-  text_layer_set_text(s_day_text, "Saturday");
+  text_layer_set_text(s_day_text, "");
   text_layer_set_text_color(s_day_text, GColorBlack);
   text_layer_set_font(s_day_text, BatteryFont);
   text_layer_set_background_color(s_day_text, GColorClear);
@@ -259,8 +274,6 @@ static void mainWindow_load(Window *window){
   
   layer_add_child(mainLayer, bitmap_layer_get_layer(s_schedBacker_layer));
   
-  layer_set_hidden(text_layer_get_layer(s_day_text), true);
-  layer_set_hidden(text_layer_get_layer(s_date_text), true);
   
   //Adding period info
   s_sched_start = text_layer_create(GRect(2, -4, 51, 18));
