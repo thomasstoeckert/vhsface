@@ -19,6 +19,7 @@ static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
 static int s_battery_level;
+static char remLabel[15];
 
 void stopped_return_animation(Animation *animation, void *data){
   deployed = false;
@@ -120,6 +121,29 @@ static void battery_callback(BatteryChargeState state){
   layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
 }
 
+static void get_remaining_time(int curT, int nexT){
+  //APP_LOG(APP_LOG_LEVEL_INFO, "I just got asked to calculate the minutes left between %d and %d", curT, nexT);
+  int nextPerM = nexT % 100;
+  int nextPerH = nexT / 100;
+  int timeM = curT % 100;
+  int timeH = curT / 100;
+  int nextF = (nextPerH * 60) + nextPerM;
+  int timeF = (timeH * 60) + timeM;
+  int remTime = nextF - timeF;
+  APP_LOG(APP_LOG_LEVEL_INFO, "%d currently, next period is %d, so there are %d minutes remaining.", timeF, nextF, remTime);
+  if(remTime > 60 && remTime > 0) {
+    snprintf(remLabel, 12, ">60 mins");
+  } else if (remTime == 0){
+    snprintf(remLabel, 12, "<0 mins");
+  } else {
+    snprintf(remLabel, 12, "%d mins", remTime);
+  }
+  if(nexT >= 2400){
+    snprintf(remLabel, 12, "       ");
+  }
+}
+
+
 static void update_time() {
   //Get a tm structure
   time_t temp = time(NULL);
@@ -128,9 +152,7 @@ static void update_time() {
   strftime(day, sizeof("WED"), "%a", tick_time);
   char time[4];
   strftime(time, sizeof("0000"), "%H%M", tick_time);
-  static char remLabel[3];
   int timeI = atoi(time);
-  int remTime = 0;
   if(strcmp(day, "Wed") == 0){
     //APP_LOG(APP_LOG_LEVEL_INFO, "Wednesday");
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_short_bitmap);
@@ -138,25 +160,13 @@ static void update_time() {
       if(timeI >= sched_shr_times[i]){
         continue;
       } else {
-        int nextPer = sched_shr_times[i + 1];
-        int nextPerM = nextPer % 100;
-        int nextPerH = nextPer / 100;
-        int timeM = timeI % 100;
-        int timeH = timeI / 100;
-        int nextF = (nextPerH * 60) + nextPerM;
-        int timeF = (timeH * 60) + timeM;
-        remTime = nextF - timeF;
-        if(remTime > 60 && remTime > 0) {
-          snprintf(remLabel, 12, ">60 mins");
-        } else if (remTime == 0){
-          snprintf(remLabel, 12, "<0 mins");
-        } else {
-          snprintf(remLabel, 12, "%d mins", remTime);
-        }
+        
+        get_remaining_time(timeI, sched_shr_times[i]);
+        
         if(i >= 1){
           i -= 1;
         }
-        //APP_LOG(APP_LOG_LEVEL_INFO, "%d", i);
+  
         text_layer_set_text(s_sched_start, sched_shr_p_start[i]);
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_shr_p_end[i]);
@@ -171,7 +181,7 @@ static void update_time() {
     text_layer_set_text(s_sched_start, "N/A");
     text_layer_set_text(s_sched_cur, "N/A");
     text_layer_set_text(s_sched_end, "N/A");
-    snprintf(remLabel, 3, "   ");
+    snprintf(remLabel, 12, "       ");
     text_layer_set_text(s_day_text, "");
   } else {
     //APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
@@ -181,21 +191,7 @@ static void update_time() {
         continue;
       
       } else {
-        int nextPer = sched_shr_times[i + 1];
-        int nextPerM = nextPer % 100;
-        int nextPerH = nextPer / 100;
-        int timeM = timeI % 100;
-        int timeH = timeI / 100;
-        int nextF = (nextPerH * 60) + nextPerM;
-        int timeF = (timeH * 60) + timeM;
-        remTime = nextF - timeF;
-        if(remTime > 60 && remTime > 0) {
-          snprintf(remLabel, 12, ">60 minutes");
-        } else if (remTime == 0){
-          snprintf(remLabel, 12, "<0 minutes");
-        } else {
-          snprintf(remLabel, 12, "%d minutes", remTime);
-        }
+        get_remaining_time(timeI, sched_reg_times[i]);
         if(i >= 1){
           i -= 1;
         }
@@ -203,6 +199,7 @@ static void update_time() {
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_reg_p_end[i]);
         text_layer_set_text(s_day_text, remLabel);
+        
         break;
       }
     }
@@ -223,6 +220,7 @@ static void mainWindow_load(Window *window){
   s_batteryBack_rect = GRect(0, 132, 144, 15);
   GRect scheduleThing = GRect(0, 146, 144, 161);
   GRect shortFrame = GRect(0, -10, 144, 168);
+  //remLabel = ""
   Layer *mainLayer = window_get_root_layer(s_mainWindow);
   //Make everything here
   //Load bitmaps
@@ -314,6 +312,8 @@ static void mainWindow_unload(Window *window){
   text_layer_destroy(s_sched_cur);
   text_layer_destroy(s_sched_end);
   text_layer_destroy(s_battery_text);
+  text_layer_destroy(s_day_text);
+  text_layer_destroy(s_date_text);
   inverter_layer_destroy(s_battery_inverter);
   layer_destroy(s_hands_layer);
   layer_destroy(s_battery_layer);
