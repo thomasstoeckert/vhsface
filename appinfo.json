@@ -9,18 +9,46 @@
     "resources": {
         "media": [
             {
+                "file": "images/vhs_schedule_blank_color.png",
+                "name": "COLOR_SCHED_BACKER_BLANK",
+                "targetPlatforms": [
+                    "basalt"
+                ],
+                "type": "png"
+            },
+            {
+                "file": "images/vieraColor.png",
+                "name": "HAWK_BACKER_COLOR",
+                "targetPlatforms": [
+                    "basalt"
+                ],
+                "type": "png"
+            },
+            {
                 "file": "images/vhs_schedule_blank.png",
                 "name": "SCHED_BACKER_BLANK",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt"
+                ],
                 "type": "png"
             },
             {
                 "file": "images/vhs_schedule_regu.png",
                 "name": "SCHED_BACKER_SHORT",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt"
+                ],
                 "type": "png"
             },
             {
                 "file": "images/vhs_schedule_short.png",
                 "name": "SCHED_BACKER_REGU",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt"
+                ],
                 "type": "png"
             },
             {
@@ -31,14 +59,21 @@
             {
                 "file": "images/vhs_hawk_backer.png",
                 "name": "HAWK_BACKER",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt"
+                ],
                 "type": "png"
             }
         ]
     },
-    "sdkVersion": "2",
+    "sdkVersion": "3",
     "shortName": "VHS Face",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
     "uuid": "649bfb19-3094-4e6a-9598-5aea08478406",
-    "versionCode": 1,
     "versionLabel": "1.5",
     "watchapp": {
         "watchface": true
