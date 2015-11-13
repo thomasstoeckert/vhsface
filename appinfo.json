@@ -9,14 +9,6 @@
     "resources": {
         "media": [
             {
-                "file": "images/vhs_schedule_blank_color.png",
-                "name": "COLOR_SCHED_BACKER_BLANK",
-                "targetPlatforms": [
-                    "basalt"
-                ],
-                "type": "png"
-            },
-            {
                 "file": "images/vieraColor.png",
                 "name": "HAWK_BACKER_COLOR",
                 "targetPlatforms": [
@@ -25,8 +17,13 @@
                 "type": "png"
             },
             {
-                "file": "images/vhs_schedule_blank.png",
-                "name": "SCHED_BACKER_BLANK",
+                "file": "images/vhs_test_image.png",
+                "name": "TEST_IMAGE",
+                "type": "png"
+            },
+            {
+                "file": "images/vhs_schedule_short.png",
+                "name": "SCHED_BACKER_REGU",
                 "targetPlatforms": [
                     "aplite",
                     "basalt"
@@ -43,17 +40,20 @@
                 "type": "png"
             },
             {
-                "file": "images/vhs_schedule_short.png",
-                "name": "SCHED_BACKER_REGU",
+                "file": "images/vhs_schedule_blank_color.png",
+                "name": "COLOR_SCHED_BACKER_BLANK",
                 "targetPlatforms": [
-                    "aplite",
                     "basalt"
                 ],
                 "type": "png"
             },
             {
-                "file": "images/vhs_test_image.png",
-                "name": "TEST_IMAGE",
+                "file": "images/vhs_schedule_blank.png",
+                "name": "SCHED_BACKER_BLANK",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt"
+                ],
                 "type": "png"
             },
             {

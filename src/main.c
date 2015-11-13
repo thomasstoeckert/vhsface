@@ -185,9 +185,9 @@ static void update_time() {
     strftime(timeLabel, sizeof(timeLabel), "%I:%M %p", tick_time);
   }
   text_layer_set_text(s_time_text, timeLabel);
-  char day[3];
+  char day[4];
   strftime(day, sizeof("WED"), "%a", tick_time);
-  char time[4];
+  char time[5];
   strftime(time, sizeof("0000"), "%H%M", tick_time);
   int timeI = atoi(time);
   if(strcmp(day, "Wed") == 0){
