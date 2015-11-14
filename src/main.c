@@ -98,12 +98,12 @@ static void tap_handler(AccelAxisType axis, int32_t direction){
 
 static void update_remainders(Layer *layer, GContext *ctx){
   if (drawRemaining && isSchoolDay){
-    graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorYellow, GColorWhite));
+    graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorBrass, GColorWhite));
     gpath_rotate_to(s_rem_indicator, s_degree_end);
     gpath_draw_filled(ctx, s_rem_indicator);
     gpath_draw_outline(ctx, s_rem_indicator);
     #if PBL_SDK_3
-    graphics_context_set_stroke_color(ctx, GColorYellow);
+    graphics_context_set_stroke_color(ctx, GColorBrass);
     graphics_context_set_stroke_width(ctx, 3);
     graphics_draw_arc(ctx, GRect(7, 17, 132, 132), GOvalScaleModeFitCircle, s_degree_start, s_degree_end);
     #endif
@@ -117,14 +117,14 @@ static void update_hands(Layer *layer, GContext *ctx) {
   struct tm *t = localtime(&now);
   
   // minute/hour hand
-  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorYellow, GColorWhite));
+  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorBrass, GColorWhite));
   graphics_context_set_stroke_color(ctx, GColorBlack);
   
   gpath_rotate_to(s_minute_hand, TRIG_MAX_ANGLE * t->tm_min / 60);
   gpath_draw_filled(ctx, s_minute_hand);
   gpath_draw_outline(ctx, s_minute_hand);
   
-  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorYellow, GColorWhite));
+  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorBrass, GColorWhite));
   gpath_rotate_to(s_hour_hand, (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6));
   gpath_draw_filled(ctx, s_hour_hand);
   gpath_draw_outline(ctx, s_hour_hand);
@@ -256,7 +256,6 @@ static void update_time() {
       }
     }
   }
-  
 }
 /*
 #if PBL_SDK_3
@@ -376,9 +375,9 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_alignment(s_sched_cur, GTextAlignmentCenter);
   text_layer_set_text_alignment(s_sched_end, GTextAlignmentRight);
   #if PBL_COLOR
-  text_layer_set_text_color(s_sched_start, GColorYellow);
-  text_layer_set_text_color(s_sched_cur, GColorYellow);
-  text_layer_set_text_color(s_sched_end, GColorYellow);
+  text_layer_set_text_color(s_sched_start, GColorBrass);
+  text_layer_set_text_color(s_sched_cur, GColorBrass);
+  text_layer_set_text_color(s_sched_end, GColorBrass);
   #endif
   Layer *schedLayer = bitmap_layer_get_layer(s_schedBacker_layer);
   layer_add_child(schedLayer, text_layer_get_layer(s_sched_start));
