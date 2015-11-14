@@ -281,8 +281,8 @@ static void mainWindow_load(Window *window){
   s_hawkBacker_bitmap = gbitmap_create_with_resource(RESOURCE_ID_HAWK_BACKER_COLOR);
   
   #endif
-  s_schedBacker_regu_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_REGU, RESOURCE_ID_COLOR_SCHED_BACKER_BLANK));
-  s_schedBacker_short_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_SHORT, RESOURCE_ID_COLOR_SCHED_BACKER_BLANK));
+  s_schedBacker_regu_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_REGU, RESOURCE_ID_COLOR_SCHED_BACKER_REGU));
+  s_schedBacker_short_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_SHORT, RESOURCE_ID_COLOR_SCHED_BACKER_SHORT));
   s_schedBacker_blank_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_BLANK, RESOURCE_ID_COLOR_SCHED_BACKER_BLANK));
   //Create bitmap layers
   #if PBL_BW

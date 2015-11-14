@@ -18,7 +18,7 @@ static const GPathInfo HOUR_HAND_POINTS = {
     {0, -40}
   }
 };
-
+#if PBL_SDK_3
 static const GPathInfo PER_END_POINTS = {
   3,
   (GPoint []){
@@ -27,3 +27,13 @@ static const GPathInfo PER_END_POINTS = {
     {0, -70}
   }
 };
+#elif PBL_SDK_2
+static const GPathInfo PER_END_POINTS = {
+  3,
+  (GPoint []){
+    {8, -40},
+    {-8, -40},
+    {0, -55}  
+  }
+};
+#endif
