@@ -147,6 +147,8 @@ static void battery_callback(BatteryChargeState state){
   newBounds.size.w = width;
   newBounds.origin.y = 132;
   layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
+  #else
+  layer_mark_dirty(s_battery_layer);
   #endif
 }
 
