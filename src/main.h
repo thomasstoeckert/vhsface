@@ -1,24 +1,22 @@
 #pragma once
 
 #include "pebble.h"
-  
+#if PBL_SDK_3
 static const GPathInfo MINUTE_HAND_POINTS = {
   3,
   (GPoint []) {
     { -8, 20 },
     { 8, 20 },
-    { 0, -60 }
+    { 0, -70 }
   }
 };
-
 static const GPathInfo HOUR_HAND_POINTS = {
   3, (GPoint []){
     {-6, 20},
     {6, 20},
-    {0, -40}
+    {0, -50}
   }
 };
-#if PBL_SDK_3
 static const GPathInfo PER_END_POINTS = {
   3,
   (GPoint []){
@@ -28,6 +26,21 @@ static const GPathInfo PER_END_POINTS = {
   }
 };
 #elif PBL_SDK_2
+static const GPathInfo MINUTE_HAND_POINTS = {
+  3,
+  (GPoint []) {
+    { -8, 20 },
+    { 8, 20 },
+    { 0, -56 }
+  }
+};
+static const GPathInfo HOUR_HAND_POINTS = {
+  3, (GPoint []){
+    {-6, 20},
+    {6, 20},
+    {0, -40}
+  }
+};
 static const GPathInfo PER_END_POINTS = {
   3,
   (GPoint []){
