@@ -23,7 +23,7 @@ static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
 static int s_battery_level;
-static int period, remInts;
+static int remInts;
 static int s_degree_start = 0, s_degree_end = 1, s_degree_current = 1;
 static char remLabel[15];
 static char timeLabel[9];
@@ -147,8 +147,6 @@ static void battery_callback(BatteryChargeState state){
   newBounds.size.w = width;
   newBounds.origin.y = 132;
   layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
-  #else
-  layer_mark_dirty(s_battery_layer);
   #endif
 }
 
@@ -245,8 +243,7 @@ static void update_time() {
         text_layer_set_text(s_sched_cur, sched_p_label[i]);
         text_layer_set_text(s_sched_end, sched_reg_p_end[i]);
         text_layer_set_text(s_rem_text, remLabel);
-        period = i;
-        
+
         s_degree_current = TRIG_MAX_ANGLE * tick_time->tm_min / 60;
         s_degree_start = s_degree_current;
         s_degree_end = s_degree_current + (TRIG_MAX_ANGLE * remInts / 60);
@@ -257,7 +254,7 @@ static void update_time() {
     }
   }
 }
-/*
+
 #if PBL_SDK_3
 static void drawBatteryBack(Layer *layer, GContext *ctx){
   graphics_context_set_fill_color(ctx, GColorGreen);
@@ -265,7 +262,7 @@ static void drawBatteryBack(Layer *layer, GContext *ctx){
   graphics_fill_rect(ctx, GRect(0, 132, width, 15), 0, GCornerNone);
 }
 #endif
-*/
+
 static void mainWindow_load(Window *window){
   s_clock_rect = GRect(9, 7, 126, 126);
   s_batteryBack_rect = GRect(0, 132, 144, 15);
@@ -274,12 +271,7 @@ static void mainWindow_load(Window *window){
   Layer *mainLayer = window_get_root_layer(s_mainWindow);
   //Make everything here
   //Load bitmaps
-  #if PBL_BW
-  s_hawkBacker_bitmap = gbitmap_create_with_resource(RESOURCE_ID_HAWK_BACKER);
-  #else
-  s_hawkBacker_bitmap = gbitmap_create_with_resource(RESOURCE_ID_HAWK_BACKER_COLOR);
-  
-  #endif
+  s_hawkBacker_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_HAWK_BACKER, RESOURCE_ID_HAWK_BACKER_COLOR));
   s_schedBacker_regu_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_REGU, RESOURCE_ID_COLOR_SCHED_BACKER_REGU));
   s_schedBacker_short_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_SHORT, RESOURCE_ID_COLOR_SCHED_BACKER_SHORT));
   s_schedBacker_blank_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_BLANK, RESOURCE_ID_COLOR_SCHED_BACKER_BLANK));
@@ -303,12 +295,13 @@ static void mainWindow_load(Window *window){
   layer_set_update_proc(s_hands_layer, update_hands);
   layer_add_child(mainLayer, s_hands_layer);
   
-  #if PBL_SDK_2
   GFont BatteryFont = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-  #elif PBL_SDK_3
-  GFont BatteryFont = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
-  GColor BatteryColor = GColorYellow; //For ease of access
-  //layer_set_update_proc(s_battery_layer, drawBatteryBack);
+  
+  #if PBL_COLOR
+  GColor BatteryColor = GColorBrass; //For ease of access
+  s_battery_layer = layer_create(s_batteryBack_rect);
+  layer_add_child(mainLayer, s_battery_layer);
+  layer_set_update_proc(s_battery_layer, drawBatteryBack);
   #endif
   
   s_battery_text = text_layer_create(s_batteryBack_rect);
@@ -317,7 +310,7 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_color(s_battery_text, GColorBlack);
   text_layer_set_font(s_battery_text, BatteryFont);
   text_layer_set_background_color(s_battery_text, GColorClear);
-  #if PBL_SDK_3
+  #if PBL_COLOR
   text_layer_set_text_color(s_battery_text, BatteryColor);
   #endif
   layer_add_child(mainLayer, text_layer_get_layer(s_battery_text));
@@ -329,7 +322,7 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_color(s_time_text, GColorBlack);
   text_layer_set_font(s_time_text, BatteryFont);
   text_layer_set_background_color(s_time_text, GColorClear);
-  #if PBL_SDK_3
+  #if PBL_COLOR
   text_layer_set_text_color(s_time_text, BatteryColor);
   #endif
   layer_add_child(mainLayer, text_layer_get_layer(s_time_text));
@@ -341,7 +334,7 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_color(s_rem_text, GColorBlack);
   text_layer_set_font(s_rem_text, BatteryFont);
   text_layer_set_background_color(s_rem_text, GColorClear);
-  #if PBL_SDK_3
+  #if PBL_COLOR
   text_layer_set_text_color(s_rem_text, BatteryColor);
   #endif
   layer_add_child(mainLayer, text_layer_get_layer(s_rem_text));
