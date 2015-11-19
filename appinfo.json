@@ -9,13 +9,21 @@
     "resources": {
         "media": [
             {
-                "file": "images/battery_plugged_32_full.png",
-                "name": "CHARGE_ICON",
+                "file": "images/Charging-full.png",
+                "name": "CHG_FULL",
                 "targetPlatforms": [
                     "basalt",
                     "chalk"
                 ],
                 "type": "png"
+            },
+            {
+                "file": "images/Charging-transparent.png",
+                "name": "CHG_TRANSPARENT",
+                "targetPlatforms": [
+                    "aplite"
+                ],
+                "type": "png-trans"
             },
             {
                 "file": "images/bt-icon-full.png",
@@ -29,14 +37,6 @@
             {
                 "file": "images/bt-icon.png",
                 "name": "BT_ICON",
-                "targetPlatforms": [
-                    "aplite"
-                ],
-                "type": "png-trans"
-            },
-            {
-                "file": "images/battery_plugged_32.png",
-                "name": "CHARGE_ICON",
                 "targetPlatforms": [
                     "aplite"
                 ],
@@ -64,11 +64,6 @@
                 "targetPlatforms": [
                     "basalt"
                 ],
-                "type": "png"
-            },
-            {
-                "file": "images/vhs_test_image.png",
-                "name": "TEST_IMAGE",
                 "type": "png"
             },
             {
@@ -107,8 +102,7 @@
                 "file": "images/vhs_hawk_backer.png",
                 "name": "HAWK_BACKER",
                 "targetPlatforms": [
-                    "aplite",
-                    "basalt"
+                    "aplite"
                 ],
                 "type": "png"
             }

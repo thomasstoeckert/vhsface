@@ -6,8 +6,13 @@
 static Window *s_mainWindow;
 static BitmapLayer *s_hawkBacker_layer;
 static BitmapLayer *s_schedBacker_layer;
-static BitmapLayer *s_blt_layer;
+//static BitmapLayer *s_blt_layer;
+#if PBL_SDK_3
 static BitmapLayer *s_chg_layer;
+#elif PBL_SDK_2
+static BitmapLayer *s_chg_layer_white;
+static BitmapLayer *s_chg_layer_black;
+#endif
 #if PBL_SDK_2
 static InverterLayer *s_battery_inverter;
 #endif
@@ -24,8 +29,13 @@ static GBitmap *s_hawkBacker_bitmap;
 static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
-static GBitmap *s_bluetooth_bitmap;
+//static GBitmap *s_bluetooth_bitmap;
+#if PBL_SDK_3
 static GBitmap *s_charging_bitmap;
+#elif PBL_SDK_2
+static GBitmap *s_charging_bitmap_white;
+static GBitmap *s_charging_bitmap_black;
+#endif
 static int s_battery_level;
 static int remInts;
 static int s_degree_start = 0, s_degree_end = 1, s_degree_current = 1;
@@ -37,12 +47,10 @@ void stopped_return_animation(Animation *animation, void *data){
   #if PBL_SDK_2
   property_animation_destroy(s_return_animation);
   #endif
-  APP_LOG(APP_LOG_LEVEL_INFO, "Finished returning");
 }
 
 void started_return_animation(Animation *animation, void *data){
   deployed = false;
-  APP_LOG(APP_LOG_LEVEL_INFO, "Starting returning");
 }
 
 static void trigger_return_animation(){
@@ -50,19 +58,7 @@ static void trigger_return_animation(){
     return;
   }
   //Setting up the animation
-  if (isSchoolDay){ /*
-    GRect from_frame = GRect(s_sched_dep.x, s_sched_dep.y, 144, 161);
-    GRect to_frame = GRect(s_sched_ret.x, s_sched_ret.y, 144, 161);
-    s_return_animation = property_animation_create_layer_frame(bitmap_layer_get_layer(s_schedBacker_layer), &from_frame, &to_frame);
-    animation_set_duration((Animation*)s_deploy_animation, 750);
-    animation_set_delay((Animation*)s_deploy_animation, 3000);
-    animation_set_curve((Animation*)s_deploy_animation, AnimationCurveEaseIn);
-    animation_set_handlers((Animation*)s_deploy_animation, (AnimationHandlers){
-      .stopped = (AnimationStoppedHandler)stopped_return_animation,
-      .started = (AnimationStartedHandler)started_return_animation
-    }, NULL);
-    
-    animation_schedule((Animation*)s_return_animation); */
+  if (isSchoolDay){ 
     GRect from_frame = GRect(s_sched_dep.x, s_sched_dep.y, 144, 161);
     GRect to_frame = GRect(s_sched_ret.x, s_sched_ret.y, 144, 161);
     s_return_animation = property_animation_create_layer_frame(bitmap_layer_get_layer(s_schedBacker_layer), &from_frame, &to_frame);
@@ -83,18 +79,15 @@ void stopped_deploy_animation(Animation *animation, void *data){
   #if PBL_SDK_2
   property_animation_destroy(s_deploy_animation);
   #endif
-  APP_LOG(APP_LOG_LEVEL_INFO, "Stopped deploying, triggering return");
   trigger_return_animation();
 }
 
 void started_deploy_animation(Animation *animation, void *data){
   deployed = true;
-  APP_LOG(APP_LOG_LEVEL_INFO, "Started Deploying");
 }
 
 static void trigger_deploy_animation(){
   if(deployed){
-    APP_LOG(APP_LOG_LEVEL_INFO, "Not deploying, is already deployed");
     return;
     
   }
@@ -167,17 +160,37 @@ static void update_hands(Layer *layer, GContext *ctx) {
 }
 
 static void battery_callback(BatteryChargeState state){
+  #if PBL_SDK_2
+  layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_white), true);
+  layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_black), true);
+  #else
+  layer_set_hidden(bitmap_layer_get_layer(s_chg_layer), true);
+  #endif
   s_battery_level = state.charge_percent;
   char battText[5] = "00%%";
   snprintf(battText, sizeof(battText), "%d%%", s_battery_level);
+  layer_set_hidden(text_layer_get_layer(s_battery_text), false);
   text_layer_set_text(s_battery_text, battText);
+  
   #if PBL_SDK_2
   int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
   GRect newBounds = layer_get_bounds(inverter_layer_get_layer(s_battery_inverter));
   newBounds.size.w = width;
   newBounds.origin.y = 132;
+  if (state.is_charging){
+    layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_white), false);
+    layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_black), false);
+    layer_set_hidden(text_layer_get_layer(s_battery_text), true);
+    newBounds.size.w = 144;
+    APP_LOG(APP_LOG_LEVEL_INFO, "It's charging");
+  }
   layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
   #else
+  if (state.is_charging) {
+    layer_set_hidden(bitmap_layer_get_layer(s_chg_layer), false);
+    layer_set_hidden(text_layer_get_layer(s_battery_text), true);
+    s_battery_level = 100;
+  }
   layer_mark_dirty(s_battery_layer);
   #endif
 }
@@ -301,20 +314,6 @@ static void drawBatteryBack(Layer *layer, GContext *ctx){
 }
 #endif
 
-#if PBL_SDK_2
-static void make_transparent_backer(GRect size, GBitmap *white_image, GBitmap *black_image, Layer *parentWindow, BitmapLayer *bitmapLayerWhite, BitmapLayer *bitmapLayerBlack){
-  bitmapLayerWhite = bitmap_layer_create(size);
-  bitmapLayerBlack = bitmap_layer_create(size);
-  bitmap_layer_set_bitmap(bitmapLayerWhite, white_image);
-  bitmap_layer_set_bitmap(bitmapLayerBlack, black_image);
-  bitmap_layer_set_compositing_mode(bitmapLayerWhite, GCompOpOr);
-  bitmap_layer_set_compositing_mode(bitmapLayerBlack, GCompOpClear);
-  layer_add_child(parentWindow, bitmap_layer_get_layer(bitmapLayerWhite));
-  layer_add_child(parentWindow, bitmap_layer_get_layer(bitmapLayerBlack));
-}
-#endif
-
-
 static void mainWindow_load(Window *window){
   s_clock_rect = GRect(9, 7, 126, 126);
   s_batteryBack_rect = GRect(0, 132, 144, 15);
@@ -327,9 +326,7 @@ static void mainWindow_load(Window *window){
   s_schedBacker_regu_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_REGU, RESOURCE_ID_COLOR_SCHED_BACKER_REGU));
   s_schedBacker_short_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_SHORT, RESOURCE_ID_COLOR_SCHED_BACKER_SHORT));
   s_schedBacker_blank_bitmap = gbitmap_create_with_resource(PBL_IF_BW_ELSE(RESOURCE_ID_SCHED_BACKER_BLANK, RESOURCE_ID_COLOR_SCHED_BACKER_BLANK));
-  #if PBL_SDK_2
-  //make_transparent_backer(GRect());
-  #endif
+  
   
   //Create bitmap layers
   #if PBL_BW
@@ -358,6 +355,30 @@ static void mainWindow_load(Window *window){
   s_battery_layer = layer_create(s_batteryBack_rect);
   layer_add_child(mainLayer, s_battery_layer);
   layer_set_update_proc(s_battery_layer, drawBatteryBack);
+  #endif
+  
+  //Here be charging things
+  
+  #if PBL_SDK_2
+  s_charging_bitmap_white = gbitmap_create_with_resource(RESOURCE_ID_CHG_TRANSPARENT_WHITE);
+  s_charging_bitmap_black = gbitmap_create_with_resource(RESOURCE_ID_CHG_TRANSPARENT_BLACK);
+  s_chg_layer_white = bitmap_layer_create(GRect(68, 137, 8, 9));
+  s_chg_layer_black = bitmap_layer_create(GRect(68, 137, 8, 9));
+  bitmap_layer_set_bitmap(s_chg_layer_white, s_charging_bitmap_white);
+  bitmap_layer_set_bitmap(s_chg_layer_black, s_charging_bitmap_black);
+  bitmap_layer_set_compositing_mode(s_chg_layer_white, GCompOpOr);
+  bitmap_layer_set_compositing_mode(s_chg_layer_black, GCompOpClear);
+  layer_add_child(mainLayer, bitmap_layer_get_layer(s_chg_layer_white));
+  layer_add_child(mainLayer, bitmap_layer_get_layer(s_chg_layer_black));
+  layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_white), true);
+  layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_black), true);
+  #elif PBL_SDK_3
+  s_charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CHG_FULL);
+  s_chg_layer = bitmap_layer_create(GRect(68, 137, 8, 9));
+  bitmap_layer_set_bitmap(s_chg_layer, s_charging_bitmap);
+  bitmap_layer_set_compositing_mode(s_chg_layer, GCompOpSet);
+  layer_add_child(mainLayer, bitmap_layer_get_layer(s_chg_layer));
+  layer_set_hidden(bitmap_layer_get_layer(s_chg_layer), true);
   #endif
   
   s_battery_text = text_layer_create(s_batteryBack_rect);
