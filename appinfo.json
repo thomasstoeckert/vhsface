@@ -9,6 +9,40 @@
     "resources": {
         "media": [
             {
+                "file": "images/battery_plugged_32_full.png",
+                "name": "CHARGE_ICON",
+                "targetPlatforms": [
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
+            {
+                "file": "images/bt-icon-full.png",
+                "name": "BT_ICON",
+                "targetPlatforms": [
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
+            {
+                "file": "images/bt-icon.png",
+                "name": "BT_ICON",
+                "targetPlatforms": [
+                    "aplite"
+                ],
+                "type": "png-trans"
+            },
+            {
+                "file": "images/battery_plugged_32.png",
+                "name": "CHARGE_ICON",
+                "targetPlatforms": [
+                    "aplite"
+                ],
+                "type": "png-trans"
+            },
+            {
                 "file": "images/vhs_schedule_short_color.png",
                 "name": "COLOR_SCHED_BACKER_REGU",
                 "targetPlatforms": [
@@ -87,7 +121,7 @@
         "basalt"
     ],
     "uuid": "649bfb19-3094-4e6a-9598-5aea08478406",
-    "versionLabel": "1.6",
+    "versionLabel": "1.7",
     "watchapp": {
         "watchface": true
     }
