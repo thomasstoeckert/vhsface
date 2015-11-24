@@ -46,7 +46,7 @@ static InverterLayer *s_battery_inverter;
 
 void stopped_return_animation(Animation *animation, void *data){
   deployed = false;
-  #if PBL_SDK_2
+  #ifdef PBL_SDK_2
   property_animation_destroy(s_return_animation);
   #endif
 }
@@ -78,7 +78,7 @@ static void trigger_return_animation(){
 
 void stopped_deploy_animation(Animation *animation, void *data){
   deployed = true;
-  #if PBL_SDK_2
+  #ifdef PBL_SDK_2
   property_animation_destroy(s_deploy_animation);
   #endif
   trigger_return_animation();
@@ -127,7 +127,7 @@ static void update_remainders(Layer *layer, GContext *ctx){
     gpath_rotate_to(s_rem_indicator, s_degree_end);
     gpath_draw_filled(ctx, s_rem_indicator);
     gpath_draw_outline(ctx, s_rem_indicator);
-    #if PBL_SDK_3
+    #ifdef PBL_SDK_3
     graphics_context_set_stroke_color(ctx, GColorBrass);
     graphics_context_set_stroke_width(ctx, 3);
     graphics_draw_arc(ctx, GRect(7, 17, 132, 132), GOvalScaleModeFitCircle, s_degree_start, s_degree_end);
@@ -162,7 +162,7 @@ static void update_hands(Layer *layer, GContext *ctx) {
 }
 
 static void battery_callback(BatteryChargeState state){
-  #if PBL_SDK_2
+  #ifdef PBL_SDK_2
   layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_white), true);
   layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_black), true);
   #else
@@ -174,7 +174,7 @@ static void battery_callback(BatteryChargeState state){
   layer_set_hidden(text_layer_get_layer(s_battery_text), false);
   text_layer_set_text(s_battery_text, battText);
   
-  #if PBL_SDK_2
+  #ifdef PBL_SDK_2
   int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
   GRect newBounds = layer_get_bounds(inverter_layer_get_layer(s_battery_inverter));
   newBounds.size.w = width;
@@ -293,7 +293,6 @@ static void update_time() {
         s_degree_current = TRIG_MAX_ANGLE * tick_time->tm_min / 60;
         s_degree_start = s_degree_current;
         s_degree_end = s_degree_current + (TRIG_MAX_ANGLE * remInts / 60);
-        //APP_LOG(APP_LOG_LEVEL_INFO, "End: %d, remaining: %d, current: %d, maximum: %d, time: %d", s_degree_end, remInts, s_degree_current, TRIGANGLE_TO_DEG(TRIG_MAX_ANGLE), tick_time->tm_min);
         layer_mark_dirty(s_remainder_ind);
         break;
       }
@@ -301,7 +300,7 @@ static void update_time() {
   }
 }
 
-#if PBL_SDK_3
+#ifdef PBL_SDK_3
 static void drawBatteryBack(Layer *layer, GContext *ctx){
   int width = (int)(float)(((float)s_battery_level / 100.0F) * 144.0F);
   graphics_context_set_fill_color(ctx, GColorBlack); //Drawing first border
@@ -366,7 +365,7 @@ static void mainWindow_load(Window *window){
   
   
   //Create bitmap layers
-  #if PBL_BW
+  #ifdef PBL_BW
   s_hawkBacker_layer = bitmap_layer_create(s_clock_rect);
   #else
   s_hawkBacker_layer = bitmap_layer_create(GRect(0, -6, 144, 144));
@@ -412,7 +411,7 @@ static void mainWindow_load(Window *window){
   
   GFont BatteryFont = fonts_get_system_font(FONT_KEY_GOTHIC_14);
   
-  #if PBL_COLOR
+  #ifdef PBL_COLOR
   GColor BatteryColor = GColorBlack; //For ease of access
   s_battery_layer = layer_create(s_batteryBack_rect);
   layer_add_child(mainLayer, s_battery_layer);
@@ -421,7 +420,7 @@ static void mainWindow_load(Window *window){
   
   //Here be charging things
   
-  #if PBL_SDK_2
+  #ifdef PBL_SDK_2
   s_charging_bitmap_white = gbitmap_create_with_resource(RESOURCE_ID_CHG_TRANSPARENT_WHITE);
   s_charging_bitmap_black = gbitmap_create_with_resource(RESOURCE_ID_CHG_TRANSPARENT_BLACK);
   s_chg_layer_white = bitmap_layer_create(GRect(68, 137, 8, 9));
@@ -434,7 +433,7 @@ static void mainWindow_load(Window *window){
   layer_add_child(mainLayer, bitmap_layer_get_layer(s_chg_layer_black));
   layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_white), true);
   layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_black), true);
-  #elif PBL_SDK_3
+  #elif defined(PBL_SDK_3)
   s_charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CHG_FULL);
   s_chg_layer = bitmap_layer_create(GRect(68, 137, 8, 9));
   bitmap_layer_set_bitmap(s_chg_layer, s_charging_bitmap);
@@ -449,7 +448,7 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_color(s_battery_text, GColorBlack);
   text_layer_set_font(s_battery_text, BatteryFont);
   text_layer_set_background_color(s_battery_text, GColorClear);
-  #if PBL_COLOR
+  #ifdef PBL_COLOR
   text_layer_set_text_color(s_battery_text, BatteryColor);
   #endif
   layer_add_child(mainLayer, text_layer_get_layer(s_battery_text));
@@ -461,7 +460,7 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_color(s_time_text, GColorBlack);
   text_layer_set_font(s_time_text, BatteryFont);
   text_layer_set_background_color(s_time_text, GColorClear);
-  #if PBL_COLOR
+  #ifdef PBL_COLOR
   text_layer_set_text_color(s_time_text, BatteryColor);
   #endif
   layer_add_child(mainLayer, text_layer_get_layer(s_time_text));
@@ -473,12 +472,12 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_color(s_rem_text, GColorBlack);
   text_layer_set_font(s_rem_text, BatteryFont);
   text_layer_set_background_color(s_rem_text, GColorClear);
-  #if PBL_COLOR
+  #ifdef PBL_COLOR
   text_layer_set_text_color(s_rem_text, BatteryColor);
   #endif
   layer_add_child(mainLayer, text_layer_get_layer(s_rem_text));
   
-  #if PBL_SDK_2
+  #ifdef PBL_SDK_2
   s_battery_inverter = inverter_layer_create(s_batteryBack_rect);
   layer_add_child(mainLayer, inverter_layer_get_layer(s_battery_inverter));
   #endif
@@ -506,7 +505,7 @@ static void mainWindow_load(Window *window){
   text_layer_set_text_alignment(s_sched_start, GTextAlignmentLeft);
   text_layer_set_text_alignment(s_sched_cur, GTextAlignmentCenter);
   text_layer_set_text_alignment(s_sched_end, GTextAlignmentRight);
-  #if PBL_COLOR
+  #ifdef PBL_COLOR
   text_layer_set_text_color(s_sched_start, GColorBrass);
   text_layer_set_text_color(s_sched_cur, GColorBrass);
   text_layer_set_text_color(s_sched_end, GColorBrass);
@@ -520,7 +519,7 @@ static void mainWindow_load(Window *window){
   // Show the correct state of the BT connection from the start
   #ifdef PBL_SDK_2
   btCallback(bluetooth_connection_service_peek());
-  #elif PBL_SDK_3
+  #elif defined(PBL_SDK_3)
   btCallback(connection_service_peek_pebble_app_connection());
   #endif
 
@@ -540,7 +539,7 @@ static void mainWindow_unload(Window *window){
   text_layer_destroy(s_battery_text);
   text_layer_destroy(s_rem_text);
   text_layer_destroy(s_time_text);
-  #if PBL_SDK_2
+  #ifdef PBL_SDK_2
   inverter_layer_destroy(s_battery_inverter);
   gbitmap_destroy(s_charging_bitmap_white);
   gbitmap_destroy(s_charging_bitmap_black);
@@ -597,7 +596,7 @@ static void init(){
   // Register for Bluetooth connection updates
   #ifdef PBL_SDK_2
   bluetooth_connection_service_subscribe(btCallback);
-  #elif PBL_SDK_3
+  #elif defined(PBL_SDK_3)
   connection_service_subscribe((ConnectionHandlers) {
     .pebble_app_connection_handler = btCallback
   });
