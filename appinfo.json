@@ -4,10 +4,27 @@
         ""
     ],
     "companyName": "thomas@stoeckert.us",
-    "longName": "Viera Watchface",
+    "longName": "Viera High School Watchface",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/BW_DISCONNECTED.png",
+                "name": "BW_DISCONNECTED",
+                "targetPlatforms": [
+                    "aplite"
+                ],
+                "type": "png-trans"
+            },
+            {
+                "file": "data/DISCONNECTED.pdc",
+                "name": "DISCONNECTED",
+                "targetPlatforms": [
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "raw"
+            },
             {
                 "file": "images/Charging-full.png",
                 "name": "CHG_FULL",
@@ -20,23 +37,6 @@
             {
                 "file": "images/Charging-transparent.png",
                 "name": "CHG_TRANSPARENT",
-                "targetPlatforms": [
-                    "aplite"
-                ],
-                "type": "png-trans"
-            },
-            {
-                "file": "images/bt-icon-full.png",
-                "name": "BT_ICON",
-                "targetPlatforms": [
-                    "basalt",
-                    "chalk"
-                ],
-                "type": "png"
-            },
-            {
-                "file": "images/bt-icon.png",
-                "name": "BT_ICON",
                 "targetPlatforms": [
                     "aplite"
                 ],
@@ -117,6 +117,6 @@
     "uuid": "649bfb19-3094-4e6a-9598-5aea08478406",
     "versionLabel": "1.7",
     "watchapp": {
-        "watchface": true
+        "watchface": false
     }
 }

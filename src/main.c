@@ -6,16 +6,7 @@
 static Window *s_mainWindow;
 static BitmapLayer *s_hawkBacker_layer;
 static BitmapLayer *s_schedBacker_layer;
-//static BitmapLayer *s_blt_layer;
-#if PBL_SDK_3
-static BitmapLayer *s_chg_layer;
-#elif PBL_SDK_2
-static BitmapLayer *s_chg_layer_white;
-static BitmapLayer *s_chg_layer_black;
-#endif
-#if PBL_SDK_2
-static InverterLayer *s_battery_inverter;
-#endif
+
 static Layer *s_hands_layer, *s_battery_layer, *s_remainder_ind;
 static bool deployed;
 static bool isSchoolDay;
@@ -29,18 +20,29 @@ static GBitmap *s_hawkBacker_bitmap;
 static GBitmap *s_schedBacker_short_bitmap;
 static GBitmap *s_schedBacker_regu_bitmap;
 static GBitmap *s_schedBacker_blank_bitmap;
-//static GBitmap *s_bluetooth_bitmap;
-#if PBL_SDK_3
-static GBitmap *s_charging_bitmap;
-#elif PBL_SDK_2
-static GBitmap *s_charging_bitmap_white;
-static GBitmap *s_charging_bitmap_black;
-#endif
 static int s_battery_level;
 static int remInts;
 static int s_degree_start = 0, s_degree_end = 1, s_degree_current = 1;
 static char remLabel[15];
 static char timeLabel[9];
+
+#if defined(PBL_SDK_3)
+static BitmapLayer *s_chg_layer;
+static GBitmap *s_charging_bitmap;
+static Layer *s_bt_layer;
+static GDrawCommandImage *s_connect_image;
+#elif defined(PBL_SDK_2)
+static BitmapLayer *s_chg_layer_white;
+static BitmapLayer *s_chg_layer_black;
+static BitmapLayer *s_bt_layer_white;
+static BitmapLayer *s_bt_layer_black;
+static GBitmap *s_charging_bitmap_white;
+static GBitmap *s_charging_bitmap_black;
+static GBitmap *s_bt_bitmap_white;
+static GBitmap *s_bt_bitmap_black;
+static InverterLayer *s_battery_inverter;
+#endif
+
 
 void stopped_return_animation(Animation *animation, void *data){
   deployed = false;
@@ -182,7 +184,6 @@ static void battery_callback(BatteryChargeState state){
     layer_set_hidden(bitmap_layer_get_layer(s_chg_layer_black), false);
     layer_set_hidden(text_layer_get_layer(s_battery_text), true);
     newBounds.size.w = 144;
-    APP_LOG(APP_LOG_LEVEL_INFO, "It's charging");
   }
   layer_set_frame(inverter_layer_get_layer(s_battery_inverter), newBounds);
   #else
@@ -234,7 +235,7 @@ static void update_time() {
   strftime(time, sizeof("0000"), "%H%M", tick_time);
   int timeI = atoi(time);
   if(strcmp(day, "Wed") == 0){
-    //APP_LOG(APP_LOG_LEVEL_INFO, "Wednesday");
+    //Wednesdays, shortened schedule
     isSchoolDay = true;
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_short_bitmap);
     for (int i = 0; i < 10; i++){
@@ -263,7 +264,7 @@ static void update_time() {
       }
     }
   } else if(strcmp(day, "Sat") == 0 || strcmp(day, "Sun") == 0){
-    //APP_LOG(APP_LOG_LEVEL_INFO, "Weekend");
+    //Weekend, no school, so no schedule
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_blank_bitmap);
     text_layer_set_text(s_sched_start, "N/A");
     text_layer_set_text(s_sched_cur, "N/A");
@@ -273,7 +274,7 @@ static void update_time() {
     isSchoolDay = false;
   } else {
     isSchoolDay = true;
-    //APP_LOG(APP_LOG_LEVEL_INFO, "Weekday");
+    //Weekday, so regular schedule, and school
     bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
     for (int i = 0; i < 10; i++){
       if(timeI >= sched_reg_times[i]){
@@ -314,6 +315,42 @@ static void drawBatteryBack(Layer *layer, GContext *ctx){
 }
 #endif
 
+#ifdef PBL_SDK_3
+static void drawBTStatus(Layer *layer, GContext *ctx){
+  GSize size = gdraw_command_image_get_bounds_size(s_connect_image);
+  GRect bounds = GRect(59, 84, 25, 25);
+  
+  const GEdgeInsets frame_insets = {
+    .top = (bounds.size.h - size.h) / 2,
+    .left = (bounds.size.w - size.w) / 2
+  };
+  
+  gdraw_command_image_draw(ctx, s_connect_image, grect_inset(bounds, frame_insets).origin); 
+}
+#endif
+
+
+static void btCallback(bool connected){
+  if (!connected){
+    #ifdef PBL_SDK_2
+    layer_set_hidden(bitmap_layer_get_layer(s_bt_layer_white), false);
+    layer_set_hidden(bitmap_layer_get_layer(s_bt_layer_black), false);
+    #endif
+    #ifdef PBL_SDK_3
+    layer_set_hidden(s_bt_layer, false);
+    #endif
+    vibes_short_pulse();
+  } else {
+    #ifdef PBL_SDK_2
+    layer_set_hidden(bitmap_layer_get_layer(s_bt_layer_white), true);
+    layer_set_hidden(bitmap_layer_get_layer(s_bt_layer_black), true);
+    #endif
+    #ifdef PBL_SDK_3
+    layer_set_hidden(s_bt_layer, true);
+    #endif
+  }
+}
+
 static void mainWindow_load(Window *window){
   s_clock_rect = GRect(9, 7, 126, 126);
   s_batteryBack_rect = GRect(0, 132, 144, 15);
@@ -339,6 +376,31 @@ static void mainWindow_load(Window *window){
   layer_add_child(mainLayer, bitmap_layer_get_layer(s_hawkBacker_layer));
   s_schedBacker_layer = bitmap_layer_create(scheduleThing);
   bitmap_layer_set_bitmap(s_schedBacker_layer, s_schedBacker_regu_bitmap);
+  
+  #if defined(PBL_SDK_2)
+  //Here be BT Connection Alert Things
+  s_bt_bitmap_white = gbitmap_create_with_resource(RESOURCE_ID_BW_DISCONNECTED_WHITE);
+  s_bt_bitmap_black = gbitmap_create_with_resource(RESOURCE_ID_BW_DISCONNECTED_BLACK);
+  s_bt_layer_white = bitmap_layer_create(GRect(59, 84, 25, 25));
+  s_bt_layer_black = bitmap_layer_create(GRect(59, 84, 25, 25));
+  bitmap_layer_set_bitmap(s_bt_layer_white, s_bt_bitmap_white);
+  bitmap_layer_set_bitmap(s_bt_layer_black, s_bt_bitmap_black);
+  bitmap_layer_set_compositing_mode(s_bt_layer_white, GCompOpOr);
+  bitmap_layer_set_compositing_mode(s_bt_layer_black, GCompOpClear);
+  layer_add_child(mainLayer, bitmap_layer_get_layer(s_bt_layer_white));
+  layer_add_child(mainLayer, bitmap_layer_get_layer(s_bt_layer_black));
+  layer_set_hidden(bitmap_layer_get_layer(s_bt_layer_white), true);
+  layer_set_hidden(bitmap_layer_get_layer(s_bt_layer_black), true);
+  #elif defined(PBL_SDK_3)
+  s_connect_image = gdraw_command_image_create_with_resource(RESOURCE_ID_DISCONNECTED);
+  if(!s_connect_image){
+    APP_LOG(APP_LOG_LEVEL_ERROR, "s_connect_image is missing!");
+  }
+  s_bt_layer = layer_create(GRect(0, 0, 144, 168));
+  layer_set_update_proc(s_bt_layer, drawBTStatus);
+  layer_add_child(mainLayer, s_bt_layer);
+  layer_set_hidden(s_bt_layer, true);
+  #endif
   
   s_remainder_ind = layer_create(shortFrame);
   layer_set_update_proc(s_remainder_ind, update_remainders);
@@ -454,6 +516,14 @@ static void mainWindow_load(Window *window){
   layer_add_child(schedLayer, text_layer_get_layer(s_sched_cur));
   layer_add_child(schedLayer, text_layer_get_layer(s_sched_end));
   update_time();
+  //Updating BT Connection
+  // Show the correct state of the BT connection from the start
+  #ifdef PBL_SDK_2
+  btCallback(bluetooth_connection_service_peek());
+  #elif PBL_SDK_3
+  btCallback(connection_service_peek_pebble_app_connection());
+  #endif
+
 }
 
 static void mainWindow_unload(Window *window){
@@ -472,10 +542,26 @@ static void mainWindow_unload(Window *window){
   text_layer_destroy(s_time_text);
   #if PBL_SDK_2
   inverter_layer_destroy(s_battery_inverter);
+  gbitmap_destroy(s_charging_bitmap_white);
+  gbitmap_destroy(s_charging_bitmap_black);
+  gbitmap_destroy(s_bt_bitmap_black);
+  gbitmap_destroy(s_bt_bitmap_white);
+  bitmap_layer_destroy(s_chg_layer_white);
+  bitmap_layer_destroy(s_chg_layer_black);
+  bitmap_layer_destroy(s_bt_layer_white);
+  bitmap_layer_destroy(s_bt_layer_black);
+  #endif
+  #ifdef PBL_SDK_3
+  gbitmap_destroy(s_charging_bitmap);
+  bitmap_layer_destroy(s_chg_layer);
+  layer_destroy(s_bt_layer);
+  gdraw_command_image_destroy(s_connect_image);
   #endif
   layer_destroy(s_hands_layer);
   layer_destroy(s_battery_layer);
   layer_destroy(s_remainder_ind);
+  
+  
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
@@ -508,6 +594,15 @@ static void init(){
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   //Put registers underneath
   
+  // Register for Bluetooth connection updates
+  #ifdef PBL_SDK_2
+  bluetooth_connection_service_subscribe(btCallback);
+  #elif PBL_SDK_3
+  connection_service_subscribe((ConnectionHandlers) {
+    .pebble_app_connection_handler = btCallback
+  });
+  #endif
+  
   //Registering the tapper
   accel_tap_service_subscribe(tap_handler);
 
@@ -520,6 +615,15 @@ static void deinit(){
   gpath_destroy(s_hour_hand);
   gpath_destroy(s_rem_indicator);
   window_destroy(s_mainWindow);
+  
+  battery_state_service_unsubscribe();
+  #ifdef PBL_SDK_2
+  bluetooth_connection_service_unsubscribe();
+  #elif defined(PBL_SDK_3)
+  connection_service_unsubscribe();
+  #endif
+  tick_timer_service_unsubscribe();
+  accel_tap_service_unsubscribe();
 }
 
 int main(){
